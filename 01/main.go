@@ -51,7 +51,7 @@ func run() error {
 
 func part1(nums []int, dest int) (int, error) {
 	for i, m := range nums {
-		for _, n := range nums[:i] {
+		for _, n := range nums[i+1:] {
 			if m+n != dest {
 				continue
 			}
@@ -63,8 +63,8 @@ func part1(nums []int, dest int) (int, error) {
 
 func part2(nums []int, dest int) (int, error) {
 	for i, m := range nums {
-		for j, n := range nums[:i] {
-			for _, o := range nums[:j] {
+		for j, n := range nums[i+1:] {
+			for _, o := range nums[j+1:] {
 				if m+n+o != dest {
 					continue
 				}
