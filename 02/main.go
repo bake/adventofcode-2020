@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -23,13 +24,7 @@ type password struct {
 func (p password) String() string { return p.pw }
 
 func (p password) validateLength() bool {
-	var num int
-	for _, r := range p.pw {
-		if r != p.letter {
-			continue
-		}
-		num++
-	}
+	num := strings.Count(p.pw, string(p.letter))
 	return p.a <= num && num <= p.b
 }
 
