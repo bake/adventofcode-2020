@@ -8,9 +8,7 @@ func TestPart1(t *testing.T) {
 		dest int
 		out  int
 	}{
-		{[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 24},
-		{[]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0}, 10, 24},
-		{[]int{1, 1, 1, 1, 1, 9, 9, 9, 9, 9}, 10, 9},
+		{[]int{1721, 979, 366, 299, 675, 1456}, 2020, 514579},
 	}
 	for i, tc := range tt {
 		out, err := part1(tc.nums, tc.dest)
@@ -29,8 +27,7 @@ func TestPart2(t *testing.T) {
 		dest int
 		out  int
 	}{
-		{[]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 30},
-		{[]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0}, 10, 30},
+		{[]int{1721, 979, 366, 299, 675, 1456}, 2020, 241861950},
 	}
 	for i, tc := range tt {
 		out, err := part2(tc.nums, tc.dest)
