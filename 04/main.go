@@ -17,24 +17,13 @@ func main() {
 	}
 }
 
-type port struct {
-	BirthYear      int    `passport:"required,byr"`
-	IssueYear      int    `passport:"required,iyr"`
-	ExpirationYear int    `passport:"required,eyr"`
-	Height         string `passport:"required,hgt"`
-	HairColor      string `passport:"required,hcl"`
-	EyeColor       string `passport:"required,ecl"`
-	// Height and Passport ID might get mixed up, so this needs to be a string.
-	PassportID string `passport:"required,pid"`
-	CountryID  int    `passport:"cid"`
-}
-
 func run() error {
 	datas, err := input(os.Stdin)
 	if err != nil {
 		return err
 	}
 	fmt.Println(part1(datas))
+	fmt.Println(part2(datas))
 	return nil
 }
 
@@ -47,11 +36,45 @@ func input(r io.Reader) ([][]byte, error) {
 }
 
 func part1(datas [][]byte) int {
+	type port struct {
+		BirthYear      int    `passport:"required,byr"`
+		IssueYear      int    `passport:"required,iyr"`
+		ExpirationYear int    `passport:"required,eyr"`
+		Height         string `passport:"required,hgt"`
+		HairColor      string `passport:"required,hcl"`
+		EyeColor       string `passport:"required,ecl"`
+		PassportID     string `passport:"required,pid"`
+		CountryID      int    `passport:"cid"`
+	}
 	var num int
 	for _, data := range datas {
 		var p port
-		err := passport.Unmarshal(data, &p)
-		if err != nil {
+		if err := passport.Unmarshal(data, &p); err != nil {
+			continue
+		}
+		num++
+	}
+	return num
+}
+
+func part2(datas [][]byte) int {
+	type port struct {
+		BirthYear      int      `passport:"required,byr" validate:"min=1920,max=2002"`
+		IssueYear      int      `passport:"required,iyr" validate:"min=2010,max=2020"`
+		ExpirationYear int      `passport:"required,eyr" validate:"min=2020,max=2030"`
+		Height         height   `passport:"required,hgt"`
+		HairColor      color    `passport:"required,hcl"`
+		EyeColor       eyeColor `passport:"required,ecl"`
+		PassportID     string   `passport:"required,pid" validate:"min=9,max=9"`
+		CountryID      int      `passport:"cid"`
+	}
+	var num int
+	for _, data := range datas {
+		var p port
+		if err := passport.Unmarshal(data, &p); err != nil {
+			continue
+		}
+		if err := passport.Validate(p); err != nil {
 			continue
 		}
 		num++

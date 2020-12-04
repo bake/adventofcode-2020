@@ -6,7 +6,7 @@ import (
 	"github.com/bake/adventofcode-2020/04/passport"
 )
 
-func TestDecode(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	tt := []struct {
 		data  []byte
 		valid bool

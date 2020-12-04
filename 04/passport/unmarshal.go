@@ -8,7 +8,12 @@ import (
 	"strings"
 )
 
-const tag = "passport"
+const unmarshalTag = "passport"
+
+// The Unmarshaller interface allows to decode into custom types.
+type Unmarshaller interface {
+	UnmarshalPassport(string) error
+}
 
 // Unmarshal a passport into a struct.
 func Unmarshal(data []byte, v interface{}) error {
@@ -32,7 +37,7 @@ func Unmarshal(data []byte, v interface{}) error {
 	t := s.Type()
 	for i := 0; i < s.NumField(); i++ {
 		f := s.Field(i)
-		tag := t.Field(i).Tag.Get(tag)
+		tag := t.Field(i).Tag.Get(unmarshalTag)
 		var required bool
 		if strings.HasPrefix(tag, "required,") {
 			tag = strings.Replace(tag, "required,", "", 1)
@@ -54,6 +59,12 @@ func Unmarshal(data []byte, v interface{}) error {
 			f.SetInt(v)
 		case reflect.String:
 			f.SetString(string(value))
+		default:
+			if g, ok := f.Addr().Interface().(Unmarshaller); ok {
+				if err := g.UnmarshalPassport(value); err != nil {
+					return fmt.Errorf("could not unmarshal %q: %v", tag, err)
+				}
+			}
 		}
 	}
 
