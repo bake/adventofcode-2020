@@ -7,13 +7,45 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	v := struct {
-		String string `validate:"min=3,max=6"`
+	tt := []struct {
+		v     interface{}
+		valid bool
 	}{
-		String: "foo",
+		{
+			v: struct {
+				String string `validate:"min=3,max=6"`
+			}{"fo"},
+			valid: false,
+		},
+		{
+			v: struct {
+				String string `validate:"min=3,max=6"`
+			}{"foo"},
+			valid: true,
+		},
+		{
+			v: struct {
+				String string `validate:"min=3,max=6"`
+			}{"foobarbaz"},
+			valid: false,
+		},
+		{
+			v: struct {
+				Number int `validate:"min=3,max=6"`
+			}{3},
+			valid: true,
+		},
+		{
+			v: struct {
+				Number int `validate:"min=3,max=6"`
+			}{42},
+			valid: false,
+		},
 	}
-	if err := passport.Validate(v); err != nil {
-		t.Fatal(err)
+	for i, tc := range tt {
+		err := passport.Validate(tc.v)
+		if tc.valid && err != nil {
+			t.Errorf("expected validation %d to be %v, got %v (%v)", i+1, tc.valid, err == nil, err)
+		}
 	}
-	t.Fatal()
 }
