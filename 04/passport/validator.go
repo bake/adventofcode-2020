@@ -12,9 +12,8 @@ const validateTag = "validate"
 // Validate a struct.
 func Validate(v interface{}) error {
 	s := reflect.ValueOf(v)
-	t := s.Type()
 	for i := 0; i < s.NumField(); i++ {
-		raw := t.Field(i).Tag.Get(validateTag)
+		raw := s.Type().Field(i).Tag.Get(validateTag)
 		tags := strings.Split(raw, ",")
 		for _, t := range tags {
 			if len(t) == 0 {
@@ -38,18 +37,26 @@ type validator interface {
 }
 
 func parseValidator(raw string) (validator, error) {
-	parts := strings.SplitN(raw, "=", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("value missing")
+	parts := strings.Split(raw, "=")
+	if len(parts) == 0 {
+		return nil, fmt.Errorf("constraint missing")
 	}
 	switch parts[0] {
+	case "required":
+		return requiredValidator{}, nil
 	case "min":
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("value for constraint %q missing", parts[0])
+		}
 		min, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return nil, err
 		}
 		return minValidator{min: min}, nil
 	case "max":
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("value for constraint %q missing", parts[0])
+		}
 		max, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return nil, err
@@ -60,9 +67,13 @@ func parseValidator(raw string) (validator, error) {
 	}
 }
 
-type minValidator struct {
-	min int
+type requiredValidator struct{}
+
+func (val requiredValidator) validate(v interface{}) bool {
+	return !reflect.ValueOf(v).IsZero()
 }
+
+type minValidator struct{ min int }
 
 func (val minValidator) validate(v interface{}) bool {
 	switch v.(type) {
@@ -75,9 +86,7 @@ func (val minValidator) validate(v interface{}) bool {
 	}
 }
 
-type maxValidator struct {
-	max int
-}
+type maxValidator struct{ max int }
 
 func (val maxValidator) validate(v interface{}) bool {
 	switch v.(type) {

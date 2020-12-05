@@ -29,13 +29,13 @@ func TestUnmarshal(t *testing.T) {
 		},
 	}
 	type port struct {
-		BirthYear      int    `passport:"required,byr"`
-		IssueYear      int    `passport:"required,iyr"`
-		ExpirationYear int    `passport:"required,eyr"`
-		Height         string `passport:"required,hgt"`
-		HairColor      string `passport:"required,hcl"`
-		EyeColor       string `passport:"required,ecl"`
-		PassportID     int    `passport:"required,pid"`
+		BirthYear      int    `passport:"byr"`
+		IssueYear      int    `passport:"iyr"`
+		ExpirationYear int    `passport:"eyr"`
+		Height         string `passport:"hgt"`
+		HairColor      string `passport:"hcl"`
+		EyeColor       string `passport:"ecl"`
+		PassportID     int    `passport:"pid"`
 		CountryID      int    `passport:"cid"`
 	}
 	for i, tc := range tt {

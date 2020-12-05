@@ -37,19 +37,22 @@ func input(r io.Reader) ([][]byte, error) {
 
 func part1(datas [][]byte) int {
 	type port struct {
-		BirthYear      int    `passport:"required,byr"`
-		IssueYear      int    `passport:"required,iyr"`
-		ExpirationYear int    `passport:"required,eyr"`
-		Height         string `passport:"required,hgt"`
-		HairColor      string `passport:"required,hcl"`
-		EyeColor       string `passport:"required,ecl"`
-		PassportID     string `passport:"required,pid"`
+		BirthYear      int    `passport:"byr" validate:"required"`
+		IssueYear      int    `passport:"iyr" validate:"required"`
+		ExpirationYear int    `passport:"eyr" validate:"required"`
+		Height         string `passport:"hgt" validate:"required"`
+		HairColor      string `passport:"hcl" validate:"required"`
+		EyeColor       string `passport:"ecl" validate:"required"`
+		PassportID     string `passport:"pid" validate:"required"`
 		CountryID      int    `passport:"cid"`
 	}
 	var num int
 	for _, data := range datas {
 		var p port
 		if err := passport.Unmarshal(data, &p); err != nil {
+			continue
+		}
+		if err := passport.Validate(p); err != nil {
 			continue
 		}
 		num++
@@ -59,13 +62,13 @@ func part1(datas [][]byte) int {
 
 func part2(datas [][]byte) int {
 	type port struct {
-		BirthYear      int      `passport:"required,byr" validate:"min=1920,max=2002"`
-		IssueYear      int      `passport:"required,iyr" validate:"min=2010,max=2020"`
-		ExpirationYear int      `passport:"required,eyr" validate:"min=2020,max=2030"`
-		Height         height   `passport:"required,hgt"`
-		HairColor      color    `passport:"required,hcl"`
-		EyeColor       eyeColor `passport:"required,ecl"`
-		PassportID     string   `passport:"required,pid" validate:"min=9,max=9"`
+		BirthYear      int      `passport:"byr" validate:"required,min=1920,max=2002"`
+		IssueYear      int      `passport:"iyr" validate:"required,min=2010,max=2020"`
+		ExpirationYear int      `passport:"eyr" validate:"required,min=2020,max=2030"`
+		Height         height   `passport:"hgt" validate:"required"`
+		HairColor      color    `passport:"hcl" validate:"required"`
+		EyeColor       eyeColor `passport:"ecl" validate:"required"`
+		PassportID     string   `passport:"pid" validate:"required,min=9,max=9"`
 		CountryID      int      `passport:"cid"`
 	}
 	var num int
