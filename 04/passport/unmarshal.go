@@ -1,7 +1,6 @@
 package passport
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -16,7 +15,15 @@ type Unmarshaller interface {
 
 // Unmarshal a passport into a struct.
 func Unmarshal(data []byte, v interface{}) error {
-	fs := fields(data)
+	fs := map[string]string{}
+	s := NewScanner(data)
+	for s.Next() {
+		fs[string(s.pair.key)] = string(s.pair.value)
+	}
+	if err := s.Error(); err != nil {
+		return fmt.Errorf("could not parse passport: %v", err)
+	}
+
 	if reflect.TypeOf(v).Kind() != reflect.Ptr {
 		return fmt.Errorf("v must be a pointer to a struct")
 	}
@@ -43,33 +50,6 @@ func Unmarshal(data []byte, v interface{}) error {
 		}
 	}
 	return nil
-}
-
-func fields(data []byte) map[string]string {
-	data = append(data, ' ')
-	fields := map[string]string{}
-	for i := 0; i < len(data); {
-		n, key, err := field(data[i:], ":")
-		if err != nil {
-			break
-		}
-		i += n + 1
-		n, value, err := field(data[i:], " \n")
-		if err != nil {
-			break
-		}
-		i += n + 1
-		fields[string(key)] = string(value)
-	}
-	return fields
-}
-
-func field(data []byte, delim string) (int, []byte, error) {
-	j := bytes.IndexAny(data, delim)
-	if j < 0 {
-		return 0, nil, fmt.Errorf("end of input")
-	}
-	return j, data[:j], nil
 }
 
 func set(kind reflect.Kind, v reflect.Value, data string) error {
