@@ -29,10 +29,9 @@ func input(r io.Reader) ([]string, error) {
 	s := bufio.NewScanner(r)
 	var lines []string
 	for s.Scan() {
-		if s.Text() == "" {
-			continue
+		if s.Text() != "" {
+			lines = append(lines, s.Text())
 		}
-		lines = append(lines, s.Text())
 	}
 	return lines, s.Err()
 }
@@ -40,8 +39,7 @@ func input(r io.Reader) ([]string, error) {
 func part1(passes []string) int {
 	var max int
 	for _, pass := range passes {
-		s := seat(pass)
-		if s > max {
+		if s := seat(pass); s > max {
 			max = s
 		}
 	}
@@ -83,7 +81,7 @@ func search(min, max int, queue string) (int, error) {
 		return min, nil
 	}
 	if len(queue) == 0 {
-		return (min + max) / 2, nil
+		return 0, fmt.Errorf("unexpected end of queue")
 	}
 	med := (min + max) / 2
 	switch queue[0] {
