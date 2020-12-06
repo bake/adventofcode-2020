@@ -35,15 +35,9 @@ func input(r io.Reader) ([]string, error) {
 
 func part1(answers []string) int {
 	var sum int
-	for _, a := range answers {
-		letters := make([]bool, 'z'-'a'+1)
-		for _, r := range a {
-			if 'a' <= r && r <= 'z' {
-				letters[r-'a'] = true
-			}
-		}
-		for _, ok := range letters {
-			if ok {
+	for _, answer := range answers {
+		for r := 'a'; r <= 'z'; r++ {
+			if strings.ContainsRune(answer, r) {
 				sum++
 			}
 		}
