@@ -10,22 +10,21 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	color := flag.String("color", "shiny gold", "The bag color")
+	flag.Parse()
+	if err := run(*color); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	color := flag.String("color", "shiny gold", "The bag color")
-	flag.Parse()
-
+func run(color string) error {
 	bags, err := input(os.Stdin)
 	if err != nil {
 		return err
 	}
-	fmt.Println(part1(*color, bags))
-	fmt.Println(part2(*color, bags))
+	fmt.Println(part1(color, bags))
+	fmt.Println(part2(color, bags))
 	return nil
 }
 
