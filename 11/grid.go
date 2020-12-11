@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	cellFloor    = '.'
-	cellEmpty    = 'L'
-	cellOccupied = '#'
+	cellFloor    byte = '.'
+	cellEmpty    byte = 'L'
+	cellOccupied byte = '#'
 )
 
 type grid struct {
@@ -44,7 +44,7 @@ func (g *grid) String() string {
 	return b.String()
 }
 
-type evolveFn func(cell byte, adj []byte) (byte, bool)
+type evolveFn func(cell byte, adj []byte) byte
 
 const (
 	distShortsighted = 1
@@ -53,16 +53,10 @@ const (
 
 func (g *grid) evolve(fn evolveFn, dist int) bool {
 	next := make([]byte, len(g.data))
-	copy(next, g.data)
 	for y := 0; y < g.height; y++ {
 		for x := 0; x < g.width; x++ {
 			i := y*g.width + x
-			c := g.data[i]
-			c, ok := fn(g.data[i], g.adjacent(x, y, dist))
-			if !ok {
-				continue
-			}
-			next[i] = c
+			next[i] = fn(g.data[i], g.adjacent(x, y, dist))
 		}
 	}
 	eq := bytes.Compare(g.data, next) == 0

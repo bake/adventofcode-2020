@@ -34,14 +34,14 @@ func input(r io.Reader) (*grid, error) {
 }
 
 func part1(g *grid) int {
-	fn := func(cell byte, adj []byte) (byte, bool) {
+	fn := func(cell byte, adj []byte) byte {
 		if cell == cellEmpty && bytes.Count(adj, []byte{cellOccupied}) == 0 {
-			return cellOccupied, true
+			return cellOccupied
 		}
 		if cell == cellOccupied && bytes.Count(adj, []byte{cellOccupied}) >= 4 {
-			return cellEmpty, true
+			return cellEmpty
 		}
-		return cellFloor, false
+		return cell
 	}
 	for g.evolve(fn, distShortsighted) {
 	}
@@ -49,14 +49,14 @@ func part1(g *grid) int {
 }
 
 func part2(g *grid) int {
-	fn := func(cell byte, adj []byte) (byte, bool) {
+	fn := func(cell byte, adj []byte) byte {
 		if cell == cellEmpty && bytes.Count(adj, []byte{cellOccupied}) == 0 {
-			return cellOccupied, true
+			return cellOccupied
 		}
 		if cell == cellOccupied && bytes.Count(adj, []byte{cellOccupied}) >= 5 {
-			return cellEmpty, true
+			return cellEmpty
 		}
-		return cellFloor, false
+		return cell
 	}
 	for g.evolve(fn, distInfinity) {
 	}
