@@ -6,7 +6,7 @@ import (
 )
 
 func (g *grid) ColorModel() color.Model {
-	return color.RGBAModel
+	return color.GrayModel
 }
 
 func (g *grid) Bounds() image.Rectangle {
@@ -16,11 +16,11 @@ func (g *grid) Bounds() image.Rectangle {
 func (g *grid) At(x, y int) color.Color {
 	switch g.data[y*g.width+x] {
 	case cellFloor:
-		return color.RGBA{R: 15, G: 56, B: 15, A: 255}
+		return color.Gray{0}
 	case cellOccupied:
-		return color.RGBA{R: 48, G: 98, B: 48, A: 255}
+		return color.Gray{255}
 	case cellEmpty:
-		return color.RGBA{R: 155, G: 188, B: 15, A: 255}
+		return color.Gray{128}
 	}
 	return color.Black
 }
