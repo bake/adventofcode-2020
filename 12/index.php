@@ -42,7 +42,7 @@ class Point
  * @param handle $handle
  * @return Generator<Action> $actions
  */
-function input($handle):Generator
+function input($handle): Generator
 {
   while ($line = fgets($handle)) {
     yield new Action($line[0], (int) substr($line, 1));
@@ -59,7 +59,7 @@ function part1($handle): int{
   $input = input($handle);
   foreach ($input as $action) {
     for($a = 0; $a < $action->steps; $a += 90) {
-      // I mainly just wanted an excure to use match.
+      // I mainly just wanted an excuse to use match.
       $dir = match ($action->direction) {
         'L' => new Point($dir->y, -$dir->x),
         'R' => new Point(-$dir->y, $dir->x),
