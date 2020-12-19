@@ -75,30 +75,6 @@ func eval(eq string) (n int, val int) {
 	return n, val
 }
 
-func step(eq string) (n int, val int) {
-	var head byte
-	var op opFn = addOp(0)
-	for len(eq) > 0 {
-		head, eq, n = eq[0], eq[1:], n+1
-		switch head {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			lav, _ := strconv.Atoi(string(head))
-			val = op(lav)
-			return n, val
-		case '+':
-			op = addOp(val)
-		case '*':
-			op = mulOp(val)
-		case '(':
-			m, lav := eval(eq)
-			n, val, eq = n+m, op(lav), eq[m:]
-		case ')':
-			return n, val
-		}
-	}
-	return n, val
-}
-
 // I thought about using RPN or adding parentheses around + but found a small
 // example on using Gos parser to evaluate mathematical expressions[1]. To
 // change the precedence I simply swapped `+` for `/` and `*` for `-`.
