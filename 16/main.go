@@ -17,19 +17,20 @@ func main() {
 }
 
 func run() error {
-	rs, _, ts, err := input(os.Stdin)
+	rs, t, ts, err := input(os.Stdin)
 	if err != nil {
 		return err
 	}
 	fmt.Println(part1(rs, ts))
+	fmt.Println(part2(rs, t, ts))
 	return nil
 }
 
-func part1(rs map[string][]rule, ts []ticket) int {
+func part1(rs map[string]rules, ts []ticket) int {
 	var sum int
 	for _, t := range ts {
 		for _, v := range t {
-			if !valid(rs, v) {
+			if !validate(rs, v) {
 				sum += v
 			}
 		}
@@ -37,7 +38,68 @@ func part1(rs map[string][]rule, ts []ticket) int {
 	return sum
 }
 
-func valid(rs map[string][]rule, v int) bool {
+func part2(rsm map[string]rules, t ticket, ts []ticket) int {
+	// Remove invalid tickets.
+	var vts []ticket
+	for _, t := range ts {
+		valid := true
+		for _, v := range t {
+			if !validate(rsm, v) {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			vts = append(vts, t)
+		}
+	}
+	ts = vts
+
+	// fields is a map from rule name to a list of possible columns.
+	fields := map[string]ticket{}
+	for n, rs := range rsm {
+		for i := range ts[0] {
+			valid := true
+			for _, t := range ts {
+				if !rs.valid(t[i]) {
+					valid = false
+					break
+				}
+			}
+			if valid {
+				fields[n] = append(fields[n], i)
+			}
+		}
+	}
+
+	// Match fields.
+	res := map[string]int{}
+	for len(res) < len(rsm) {
+		var found int
+		for n, rs := range fields {
+			if len(rs) == 1 {
+				found, res[n] = rs[0], rs[0]
+				break
+			}
+		}
+		for n, t := range fields {
+			fields[n] = t.delete(found)
+			if len(fields[n]) == 0 {
+				delete(fields, n)
+			}
+		}
+	}
+
+	prod := 1
+	for n, i := range res {
+		if strings.HasPrefix(n, "departure") {
+			prod *= t[i]
+		}
+	}
+	return prod
+}
+
+func validate(rs map[string]rules, v int) bool {
 	for _, rs := range rs {
 		for _, r := range rs {
 			if r.valid(v) {
@@ -54,10 +116,31 @@ func (r rule) valid(v int) bool {
 	return r.min <= v && v <= r.max
 }
 
+type rules []rule
+
+func (rs rules) valid(v int) bool {
+	for _, r := range rs {
+		if r.valid(v) {
+			return true
+		}
+	}
+	return false
+}
+
 type ticket []int
 
-func input(r io.Reader) (rules map[string][]rule, t ticket, ts []ticket, err error) {
-	rules = map[string][]rule{}
+func (t ticket) delete(v int) ticket {
+	for i, w := range t {
+		if v != w {
+			continue
+		}
+		return append(t[:i], t[i+1:]...)
+	}
+	return t
+}
+
+func input(r io.Reader) (rsm map[string]rules, t ticket, ts []ticket, err error) {
+	rsm = map[string]rules{}
 	s := bufio.NewScanner(r)
 	step := "rules"
 	for s.Scan() {
@@ -74,21 +157,21 @@ func input(r io.Reader) (rules map[string][]rule, t ticket, ts []ticket, err err
 			if err != nil {
 				return nil, t, ts, err
 			}
-			rules[n] = append(rules[n], rs...)
+			rsm[n] = append(rsm[n], rs...)
 		case "your ticket":
 			t, err = inputInts(s.Text())
 			if err != nil {
 				return nil, t, ts, err
 			}
 		case "nearby tickets":
-			t, err = inputInts(s.Text())
+			nt, err := inputInts(s.Text())
 			if err != nil {
 				return nil, t, ts, err
 			}
-			ts = append(ts, t)
+			ts = append(ts, nt)
 		}
 	}
-	return rules, t, ts, s.Err()
+	return rsm, t, ts, s.Err()
 }
 
 func inputInts(text string) ([]int, error) {
