@@ -21,6 +21,7 @@ func run() error {
 		return err
 	}
 	fmt.Println(part1(rs, ms))
+	fmt.Println(part2(rs, ms))
 	return nil
 }
 
@@ -55,35 +56,52 @@ func input(r io.Reader) (map[string][][]string, []string, error) {
 func part1(rs map[string][][]string, ms []string) int {
 	var sum int
 	for _, m := range ms {
-		n, _ := match(m, "0", rs)
-		if n == len(m) {
-			sum++
+		for _, n := range match(m, "0", 0, rs) {
+			if n == len(m) {
+				sum++
+			}
 		}
 	}
 	return sum
 }
 
-func match(str string, key string, rs map[string][][]string) (int, bool) {
-	var n int
-	for _, r := range rs[key] {
-		cpy := str
-		if len(cpy) >= 1 && len(r) == 1 && r[0][0] >= 'a' && r[0][0] <= 'z' {
-			if string(cpy[0]) == r[0] {
-				return 1, true
+func part2(rs map[string][][]string, ms []string) int {
+	var sum int
+	rs["8"] = [][]string{{"42"}, {"42", "8"}}
+	rs["11"] = [][]string{{"42", "31"}, {"42", "11", "31"}}
+	for _, m := range ms {
+		for _, n := range match(m, "0", 0, rs) {
+			if n == len(m) {
+				sum++
 			}
-			return 0, false
-		}
-		var m int
-		for _, b := range r {
-			o, ok := match(cpy, string(b), rs)
-			if !ok {
-				break
-			}
-			m, cpy = m+o, cpy[o:]
-		}
-		if m > n {
-			n = m
 		}
 	}
-	return n, n > 0
+	return sum
+}
+
+func match(str string, key string, index int, rs map[string][][]string) []int {
+	if index >= len(str) {
+		return nil
+	}
+
+	var ns []int
+	for _, r := range rs[key] {
+		if len(r) == 1 && r[0][0] >= 'a' && r[0][0] <= 'z' {
+			if string(str[index]) != r[0] {
+				return nil
+			}
+			return []int{index + 1}
+		}
+
+		ms := []int{index}
+		for _, b := range r {
+			var os []int
+			for _, i := range ms {
+				os = append(os, match(str, string(b), i, rs)...)
+			}
+			ms = os
+		}
+		ns = append(ns, ms...)
+	}
+	return ns
 }
