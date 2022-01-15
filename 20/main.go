@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
 )
 
@@ -21,6 +22,7 @@ func run() error {
 		return err
 	}
 	fmt.Println(part1(ts))
+	fmt.Println(part2(ts))
 	return nil
 }
 
@@ -41,99 +43,186 @@ func input(r io.Reader) (map[int]tile, error) {
 	return ts, nil
 }
 
-type tile [][]byte
-
-// rotate a tile 90deg clockwise.
-func (t tile) rotate() tile {
-	w, h := len(t), len(t[0])
-	dst := make(tile, w)
-	for x := range dst {
-		dst[x] = make([]byte, h)
-	}
-	for x := 0; x < w; x++ {
-		for y := 0; y < h; y++ {
-			dst[y][w-1-x] = t[x][y]
-		}
-	}
-	return dst
-}
-
-func (t tile) flipX() tile {
-	w := len(t)
-	dst := make(tile, w)
-	for y := range t {
-		dst[y] = make([]byte, w)
-		for i, j := 0, w-1; i < j; i, j = i+1, j-1 {
-			dst[y][i], dst[y][j] = t[y][j], t[y][i]
-		}
-	}
-	return dst
-}
-
-func (t tile) flipY() tile {
-	h := len(t[0])
-	dst := make(tile, h)
-	for i, j := 0, h-1; i < j; i, j = i+1, j-1 {
-		dst[i], dst[j] = t[j], t[i]
-	}
-	return dst
-}
-
-func (t tile) edge() []byte { return t[0] }
-
-func (t tile) String() string { return string(bytes.Join(t, []byte{'\n'})) }
-
-// list is a helper structure for duplicate free slices.
-type list map[int]interface{}
-
-func (l list) add(i int) { l[i] = nil }
-
-func (l list) slice() []int {
-	var is []int
-	for i := range l {
-		is = append(is, i)
-	}
-	return is
-}
-
-type edge struct {
-	tile         int
-	rotations    int
-	flipX, flipY bool
-}
-
-func edges(ts map[int]tile) (map[string][]edge, map[int]list) {
-	es := map[string][]edge{}
-	ns := map[int]list{}
+// edges returns an map from tile ids to their connected tile ids.
+func edges(ts map[int]tile) map[int][]int {
+	es := map[string][]int{}
+	ns := map[int]map[int]interface{}{}
 	for i, t := range ts {
-		ns[i] = list{}
+		ns[i] = map[int]interface{}{}
 		for r := 0; r < 4; r++ {
-			e := string(t.edge())
-			es[e] = append(es[e], edge{tile: i, rotations: r})
-
-			e = string(t.flipX().edge())
-			es[e] = append(es[e], edge{tile: i, rotations: r, flipX: true})
-			e = string(t.flipY().edge())
-			es[e] = append(es[e], edge{tile: i, rotations: r, flipY: true})
-
-			for _, v := range es[e] {
-				ns[i].add(v.tile)
-				ns[v.tile].add(i)
+			e, ok := t.edge(north)
+			if !ok {
+				continue
 			}
-
+			es[e] = append(es[e], i)
+			if e, ok := t.flipY().edge(north); ok {
+				es[e] = append(es[e], i)
+			}
+			for _, v := range es[e] {
+				if i == v {
+					continue
+				}
+				ns[i][v] = nil
+				ns[v][i] = nil
+			}
 			t = t.rotate()
 		}
 	}
-	return es, ns
+
+	res := map[int][]int{}
+	for id, ids := range ns {
+		for i := range ids {
+			res[id] = append(res[id], i)
+		}
+	}
+	return res
 }
 
 func part1(ts map[int]tile) int {
-	_, ns := edges(ts)
 	prod := 1
-	for i, l := range ns {
-		if len(l) == 3 {
+	for i, l := range edges(ts) {
+		if len(l) == 2 {
 			prod *= i
 		}
 	}
 	return prod
+}
+
+// neighbour returns an adjacent tile.
+func neighbour(ts map[int]tile, stop map[int]interface{}, id int, side1, side2 int) (int, tile, bool) {
+	e1, ok := ts[id].edge(side1)
+	if !ok {
+		return 0, nil, false
+	}
+	for i, t := range ts {
+		if i == id {
+			continue
+		}
+		if _, ok := stop[i]; ok {
+			continue
+		}
+		for _, ta := range t.orientations() {
+			if e2, ok := ta.edge(side2); ok && e1 == e2 {
+				ts[i] = ta
+				return i, ta, true
+			}
+		}
+	}
+	return 0, nil, false
+}
+
+func tiledRow(ts map[int]tile, used map[int]interface{}, id, width int) ([]int, []tile, bool) {
+	ids := []int{id}
+	tiles := []tile{ts[id]}
+	for x := len(ids); x < width; x++ {
+		var ok bool
+		id, _, ok = neighbour(ts, used, id, east, west)
+		if !ok {
+			return ids, tiles, false
+		}
+		ids = append(ids, id)
+		used[id] = nil
+	}
+	return ids, tiles, true
+}
+
+func tiledImage(ts map[int]tile, start int) ([][]int, bool) {
+	size := int(math.Sqrt(float64(len(ts))))
+	var ids [][]int
+	used := map[int]interface{}{}
+	for len(ts) > 0 {
+		row, _, ok := tiledRow(ts, used, start, size)
+		if !ok {
+			break
+		}
+		ids = append(ids, row)
+		start, _, _ = neighbour(ts, used, start, south, north)
+	}
+	if len(ids) == size && len(ids[size-1]) == size {
+		return ids, true
+	}
+	return nil, false
+}
+
+// patterns returns the number of times a given pattern occures in a tile.
+func patterns(t, pattern tile) int {
+	var num int
+	for yt := 0; yt < len(t)-len(pattern); yt++ {
+		for xt := 0; xt < len(t[0])-len(pattern[0]); xt++ {
+			found := true
+			for ym := range pattern {
+				for xm := range pattern[ym] {
+					if pattern[ym][xm] == ' ' {
+						continue
+					}
+					if pattern[ym][xm] != t[yt+ym][xt+xm] {
+						found = false
+						break
+					}
+				}
+			}
+			if found {
+				num++
+			}
+		}
+	}
+	return num
+}
+
+func part2(ts map[int]tile) int {
+	var ids [][]int
+	var ok bool
+	for i, l := range edges(ts) {
+		if len(l) != 2 {
+			continue
+		}
+		ids, ok = tiledImage(ts, i)
+		if ok {
+			break
+		}
+	}
+
+	image := newTile(0, len(ids)*8)
+	for row := range ids {
+		for col := range ids[row] {
+			id := ids[row][col]
+			t := ts[id].trim()
+			for y := 0; y < len(t); y++ {
+				yi := row*len(t) + y
+				image[yi] = append(image[yi], t[y]...)
+			}
+		}
+	}
+
+	var seaHashes int
+	for _, row := range image {
+		for _, cell := range row {
+			if cell == '#' {
+				seaHashes++
+			}
+		}
+	}
+
+	monster := tile{
+		[]byte("                  # "),
+		[]byte("#    ##    ##    ###"),
+		[]byte(" #  #  #  #  #  #   "),
+	}
+	var monsterHashes int
+	for _, row := range monster {
+		for _, cell := range row {
+			if cell == '#' {
+				monsterHashes++
+			}
+		}
+	}
+	var monsters int
+	for _, t := range image.orientations() {
+		num := patterns(t, monster)
+		if num > monsters {
+			monsters = num
+		}
+	}
+
+	return seaHashes - monsters*monsterHashes
 }
